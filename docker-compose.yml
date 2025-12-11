@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: meu_banco
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres:/docker-entrypoint-initdb.d
+      
+  
+  solr:
+    image: solr:9-slim
+    ports:
+      - "8983:8983"
+    volumes:
+      - solr-data:/var/solr
+    command:
+      - solr-precreate
+      - ocupacoes
+    depends_on:
+      - postgres
+
+  flaskapp-back:
+    build:
+      context: .
+      dockerfile: Dockerfile.flaskapp
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - solr
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: "12345"
+      DB_HOST: postgres
+      DB_NAME: meu_banco
+  
+
+volumes:
+  postgres_data:
+  solr-data:
